@@ -1,0 +1,23 @@
+{
+  "address": "(\\w+[^\\S\\r\\n]*)+,*",
+  "addressstart": "(^.\\s)",
+  "blankline": "^\\s+$",
+  "tripdetails": "Trip Details",
+  "money": "\\$\\d+\\.?\\d{2}",
+  "number": "\\d+\\.?\\d*",
+  "duration": "(^\\d+?\\shr)?\\s?(\\d{1,2}\\smin){1}\\s?(\\d+\\ssec)?",
+  "timerequested": "Time Requested",
+  "daterequested": "Date Requested",
+  "time": "(0?[1-9]|1[0-2]):([0-5]\\d)\\s?((?:A|P)\\.?M\\.?)",
+  "date": "(\\w{3}),\\s(\\w{3})\\s(\\d{1,2})",
+  "pointsearned": "Points Earned",
+  "tipincluded": "Tip Included",
+  "fare": "Fare",
+  "base": "Base",
+  "tripsupplement": "Trip Supplement",
+  "customerpayments": "Customer payments",
+  "customer": "(Customer)\\s?(\\d)?",
+  "customerprice": "Customer price",
+  "tip": "Tip",
+  "total": "Total"
+}
