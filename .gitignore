@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+#Manual Addtitions
+OCRUber/DataSet/*
+
 # User-specific files
 *.rsuser
 *.suo
