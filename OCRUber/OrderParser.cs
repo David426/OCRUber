@@ -15,63 +15,55 @@ namespace OCRUber
         string OrderText;
         RegexManager RegexManager;
 
-        public OrderParser(string text)
+        public OrderParser()
+        {
+            RegexManager = new RegexManager();
+        }
+
+        public OrderSummary ParseOrder(string text)
         {
             OrderText = text;
             OrderLines = OrderText.Split('\n').ToList();
-            RegexManager = new RegexManager();
-        }
-        public void ParseOrder()
-        {
+            OrderSummary orderSummary = new OrderSummary();
+
             //Remove blank lines
             Regex regex = RegexManager.GetRegex(RegexType.BlankLine);
             OrderLines = OrderLines.Where(t => !regex.IsMatch(t)).ToList();
+            orderSummary.OCRParseText = string.Join("\n", OrderLines);
             //Get to "Trip Details"
-            int currentLine = 0;
 
-            Address fromAddress = ParseAddress(GetLine(RegexManager.GetRegex(RegexType.TripDetails), offset: 1));
-            Address toAddress = ParseAddress(GetLine(RegexManager.GetRegex(RegexType.TripDetails), offset: 2));
+            orderSummary.PickupLocation = ParseAddress(GetLine(RegexManager.GetRegex(RegexType.TripDetails), offset: 1));
+            orderSummary.DropoffLocation = ParseAddress(GetLine(RegexManager.GetRegex(RegexType.TripDetails), offset: 2));
 
             //Look for Earnings
-            decimal earned = ParseMoney(GetLine(RegexManager.GetRegex(RegexType.Money)));
+            orderSummary.Earnings = ParseMoney(GetLine(RegexManager.GetRegex(RegexType.Money)));
 
             //Look for duration
-            TimeSpan duration = ParseTripTime(GetLine(RegexManager.GetRegex(RegexType.Duration)));
+            orderSummary.TripDuration = ParseTripTime(GetLine(RegexManager.GetRegex(RegexType.Duration)));
 
             //Get Time Requested
             TimeOnly requestTime = ParseRequestTime(GetLine(RegexManager.GetRegex(RegexType.TimeRequested)));
 
             //Get Date Requested
             DateTime requestDateTime = ParseRequestDate(GetLine(RegexManager.GetRegex(RegexType.DateRequested)));
-            requestDateTime = requestDateTime.AddHours(requestTime.Hour).AddMinutes(requestTime.Minute);
+            orderSummary.RequestTime = requestDateTime.AddHours(requestTime.Hour).AddMinutes(requestTime.Minute);
 
             //Get Points Earned
-            int pointsEarned = ParsePointsEarned(GetLine(RegexManager.GetRegex(RegexType.PointsEarned)));
+            orderSummary.Points = ParsePointsEarned(GetLine(RegexManager.GetRegex(RegexType.PointsEarned)));
 
             //Paid To You section
-            decimal tip = ParseMoney(GetLine(RegexManager.GetRegex(RegexType.TipIncluded)));
-            decimal fare = ParseMoney(GetLine(RegexManager.GetRegex(RegexType.Fare)));
-            decimal baseAmount = ParseMoney(GetLine(RegexManager.GetRegex(RegexType.Base)));
-            decimal tripSupplement = ParseMoney(GetLine(RegexManager.GetRegex(RegexType.TripSupplement)));
+            orderSummary.Tip = ParseMoney(GetLine(RegexManager.GetRegex(RegexType.TipIncluded)));
+            orderSummary.Fare = ParseMoney(GetLine(RegexManager.GetRegex(RegexType.Fare)));
+            orderSummary.BaseAmount = ParseMoney(GetLine(RegexManager.GetRegex(RegexType.Base)));
+            orderSummary.TripSupplement = ParseMoney(GetLine(RegexManager.GetRegex(RegexType.TripSupplement)));
 
             //Customer Payments Section
+            int currentLine = 0;
             currentLine = GetLineNumber(RegexManager.GetRegex(RegexType.CustomerPayments));
             List<CustomerPayment> customers = ParseCustomerPayments(currentLine);
+            orderSummary.CustomerPayments.AddRange(customers);
 
-            Console.WriteLine($"\nOrder) - ${earned}\nFROM: {fromAddress}\nTO  : {toAddress}");
-            Console.WriteLine($"Time: {requestTime} Duration: {duration} Points: {pointsEarned}");
-            Console.WriteLine($"Compensation");
-            Console.WriteLine($"Fare {fare}");
-            Console.WriteLine($"  Base {baseAmount}");
-            Console.WriteLine($"  Supp {tripSupplement}");
-            Console.WriteLine($"Tip {tip}");
-            Console.WriteLine($"---------------------------");
-            Console.WriteLine($"Total {earned}");
-            Console.WriteLine("Customer Payments");
-            for(int i = 0; i < customers.Count; i++)
-            {
-                Console.WriteLine($"{i + 1}) {customers[i]}");
-            }
+            return orderSummary;
         }
 
         /// <summary>
@@ -251,11 +243,16 @@ namespace OCRUber
 
             if (!moreThanOneCustomer)
             {
+                //Get Customer Paytments
                 CustomerPayment customer = ParseCustomerPayment(startingLine, startingLine + 3, moreThanOneCustomer, out int finishingLine);
+                //Get Customer Payments to Uber
+                int paidToUberSection = GetLineNumber(RegexManager.GetRegex(RegexType.PaidToUber), startingLine);
+                customer.PaidToUber = ParseMoney(GetLine(RegexManager.GetRegex(RegexType.Money), paidToUberSection));
                 customerPayment.Add(customer);
             }
             else
             {
+                //Get Multiple Customer Paytments
                 int currentLine = GetLineNumber(RegexManager.GetRegex(RegexType.Customer), startingLine);
                 int sectionEnd = GetLineNumber(RegexManager.GetRegex(RegexType.Total), startingLine);
                 while (currentLine > 0 && currentLine < sectionEnd)
@@ -263,9 +260,22 @@ namespace OCRUber
                     customerPayment.Add(ParseCustomerPayment(currentLine, sectionEnd, moreThanOneCustomer, out int finishingLine));
                     currentLine = Math.Max(GetLineNumber(RegexManager.GetRegex(RegexType.Customer), currentLine + 2), finishingLine);
                 }
+                //Get Multiple Customers Payments to Uber
+                currentLine = GetLineNumber(RegexManager.GetRegex(RegexType.PaidToUber), startingLine);
+                sectionEnd = GetLineNumber(RegexManager.GetRegex(RegexType.Total), currentLine);
+                int i = 0;
+                while (currentLine > 0 && currentLine < sectionEnd && i < customerPayment.Count)
+                {
+                    CustomerPayment customer = customerPayment[i];
+                    currentLine = GetLineNumber(RegexManager.GetRegex(RegexType.ServiceFee), currentLine);
+                    customer.PaidToUber = ParseMoney(OrderLines[currentLine]);
+                    currentLine = GetLineNumber(RegexManager.GetRegex(RegexType.Customer), currentLine);
+                    i++;
+                }
             }
             return customerPayment;
         }
+
         private CustomerPayment ParseCustomerPayment(int startingLine, int sectionEnd, bool isMultipleCustomer, out int finishingLine)
         {
             finishingLine = startingLine;
@@ -303,6 +313,5 @@ namespace OCRUber
             finishingLine = Math.Max(tipLine, priceLine);
             return customerPayment;
         }
-
     }
 }

@@ -11,10 +11,11 @@ namespace OCRUber.Models
         public decimal Total { get; set; }
         public decimal Price { get; set; }
         public decimal Tip { get; set; }
+        public decimal PaidToUber { get; set; }
 
         public override string ToString()
         {
-            return $"{Total} = {Price} + {Tip}";
+            return $"Earnings :{Price} - {PaidToUber} + {Tip}\nTotal Payment: {Total} = {Price} + {Tip}";
         }
     }
 }

@@ -6,21 +6,20 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using OCRUber.Models;
 
 namespace OCRUber
 {
     public class Application
     {
-
-        static int count = 1;
-
         public static void Main(string[] args)
         {
-            OrderParser orderParser;
+            OrderParser orderParser = new OrderParser();
+            DataIntegretyCheck dataIntegretyCheck = new DataIntegretyCheck();
             var Ocr = new IronTesseract();
 
             DirectoryInfo d = new DirectoryInfo(@"../../../DataSet/");
-
+            List<OrderSummary> orderSummaries = new List<OrderSummary>();
             foreach (var file in d.GetFiles("*.jpg"))
             {
                 string text = null;
@@ -29,10 +28,11 @@ namespace OCRUber
                     var Result = Ocr.Read(Input);
                     text = Result.Text;
                 }
-                orderParser = new OrderParser(text);
-                orderParser.ParseOrder();
+                OrderSummary summary = orderParser.ParseOrder(text);
+                summary = dataIntegretyCheck.CheckOrder(summary);
+                orderSummaries.Add(summary);
+                Console.Write(summary.ToString());
             }
-
         }
     }
 }

@@ -32,7 +32,9 @@ namespace OCRUber
         Customer,
         CustomerPrice,
         Tip,
-        Total
+        Total,
+        PaidToUber,
+        ServiceFee
     }
     public class RegexManager
     {
@@ -67,7 +69,5 @@ namespace OCRUber
             }
             return Regexes[type];
         } 
-
-
     }
 }

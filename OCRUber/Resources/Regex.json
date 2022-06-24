@@ -3,7 +3,7 @@
   "addressstart": "(^.\\s)",
   "blankline": "^\\s+$",
   "tripdetails": "Trip Details",
-  "money": "\\$\\d+\\.?\\d{2}",
+  "money": "-?\\$\\d+\\.?\\d{2}",
   "number": "\\d+\\.?\\d*",
   "duration": "(^\\d+?\\shr)?\\s?(\\d{1,2}\\smin){1}\\s?(\\d+\\ssec)?",
   "timerequested": "Time Requested",
@@ -19,5 +19,7 @@
   "customer": "(Customer)\\s?(\\d)?",
   "customerprice": "Customer price",
   "tip": "Tip",
-  "total": "Total"
+  "total": "Total",
+  "paidtouber": "Paid to Uber",
+  "servicefee": "Service F?f?ee"
 }
