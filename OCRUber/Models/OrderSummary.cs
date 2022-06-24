@@ -20,9 +20,11 @@ namespace OCRUber.Models
         public decimal TripSupplement { get; set; }
         public List<CustomerPayment> CustomerPayments { get; set; }
         public string OCRParseText { get; set; }
+        public List<OrderParseError> Errors { get; set; }
         public OrderSummary()
         {
             CustomerPayments = new List<CustomerPayment>();
+            Errors = new List<OrderParseError>();
         }
 
         public override string ToString()

@@ -33,6 +33,19 @@ namespace OCRUber
                 orderSummaries.Add(summary);
                 Console.Write(summary.ToString());
             }
+            Console.WriteLine("\n\n...\n\nERRORS\n------------------------------");
+            var errorOrders = orderSummaries.Where(os => os.Errors.Count > 0);
+            foreach(var orderWithError in errorOrders)
+            {
+                Console.WriteLine($"Order {orderWithError.RequestTime}, {orderWithError.Earnings}");
+                foreach(var error in orderWithError.Errors)
+                {
+                    Console.WriteLine($"  {error.PropertyName} : {error.Value}");
+                    Console.WriteLine($"  {error.Description}");
+                    Console.WriteLine($"  --");
+                }
+                Console.WriteLine($"===============================");
+            }
         }
     }
 }
